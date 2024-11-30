@@ -1,0 +1,21 @@
+# Arquivos de ambiente
+.env
+
+# Diretórios e arquivos de compilação
+__pycache__/
+*.py[cod]
+*.so
+
+# Logs
+*.log
+
+# Dependências do Python
+venv/
+*.egg-info/
+dist/
+build/
+
+# Configurações do editor
+.vscode/
+.idea/
+*.swp
