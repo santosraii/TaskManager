@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarefas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .draggable {
+            cursor: move;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <span class="navbar-title">Lista de Tarefas</span>
+    </nav>
+    
+    <div class="container">
+        <div class="inicio">
+            <h2 class="my-4">Tarefas Cadastradas</h2>
+            <button class="btn btn-success mb-4" data-toggle="modal" data-target="#novaTarefaModal">Nova Tarefa</button>
+        </div>
+        
+        
+        <div class="row" id="tarefas"> 
+            {% for tarefa in tarefas %} 
+            <div class="col-md-4 mb-4 draggable" data-id="{{ tarefa.id }}">
+                <div class="card {% if tarefa.custo >= 1000 %}highlighted-task{% endif %}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ tarefa.nome }}</h5>
+                        <p class="card-text"><strong>Custo:</strong> {{ tarefa.custo }}</p>
+                        <p class="card-text"><strong>Data Limite:</strong> {{ tarefa.data_limite_formatada }}</p>
+                        <div class="card-actions">
+                            <a href="javascript:void(0);" class="btn-action" data-toggle="modal" data-target="#editarTarefaModal" onclick="carregarDadosTarefa('{{ tarefa.id }}', '{{ tarefa.nome }}', '{{ tarefa.custo }}', '{{ tarefa.data_limite }}')">✏️</a>
+                            <a href="javascript:void(0);" class="btn-action" data-toggle="modal" data-target="#confirmarExclusaoModal" onclick="prepararExclusao('{{ tarefa.id }}')">🗑️</a>
+                        </div>
+                        <div class="reorder-actions mt-3">
+                            <form action="/subir/{{ tarefa.id }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-primary btn-sm" {% if loop.first %}disabled{% endif %}>⬆️</button>
+                            </form>
+                            <form action="/descer/{{ tarefa.id }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-primary btn-sm" {% if loop.last %}disabled{% endif %}>⬇️</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Modal para criar nova tarefa -->
+        <div class="modal fade" id="novaTarefaModal" tabindex="-1" aria-labelledby="novaTarefaModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="novaTarefaModalLabel">Nova Tarefa</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="/criar" method="POST">
+                            <div class="form-group">
+                                <label for="nome">Nome da Tarefa:</label>
+                                <input type="text" class="form-control" id="nome" name="nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="custo">Custo da Tarefa:</label>
+                                <input type="number" class="form-control" id="custo" name="custo" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="data_limite">Data Limite:</label>
+                                <input type="date" class="form-control" id="data_limite" name="data_limite" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Criar Tarefa</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para editar tarefa -->
+        <div class="modal fade" id="editarTarefaModal" tabindex="-1" aria-labelledby="editarTarefaModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editarTarefaModalLabel">Editar Tarefa</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editarTarefaForm" method="POST">
+                            <div class="form-group">
+                                <label for="edit-nome">Nome da Tarefa:</label>
+                                <input type="text" class="form-control" id="edit-nome" name="nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-custo">Custo da Tarefa:</label>
+                                <input type="number" class="form-control" id="edit-custo" name="custo" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-data_limite">Data Limite:</label>
+                                <input type="date" class="form-control" id="edit-data_limite" name="data_limite" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para confirmação de exclusão -->
+        <div class="modal fade" id="confirmarExclusaoModal" tabindex="-1" aria-labelledby="confirmarExclusaoModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmarExclusaoModalLabel">Confirmar Exclusão</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Você tem certeza que deseja excluir esta tarefa?</p>
+                        <form id="excluirTarefaForm" method="POST">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Não</button>
+                            <button type="submit" class="btn btn-danger">Sim</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    function carregarDadosTarefa(id, nome, custo, data_limite) {
+        document.getElementById('edit-nome').value = nome;
+        document.getElementById('edit-custo').value = custo;
+        document.getElementById('edit-data_limite').value = data_limite;
+        document.getElementById('editarTarefaForm').action = '/editar/' + id;
+    }
+
+    function prepararExclusao(id) {
+        document.getElementById('excluirTarefaForm').action = '/excluir/' + id;
+    }
+
+    $(function() {
+        $("#tarefas").sortable({
+            update: function(event, ui) {
+                var order = $(this).sortable('toArray', { attribute: 'data-id' });
+                $.ajax({
+                    url: '/reordenar',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ order: order }),
+                    success: function(response) {
+                        console.log('Ordem atualizada!');
+                    }
+                });
+            }
+        });
+        $("#tarefas").disableSelection();
+    });
+</script>
+
+</body>
+</html>
